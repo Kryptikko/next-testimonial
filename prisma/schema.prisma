@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(cuid())
+  name            String?
+  email           String?           @unique
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  products        Product[]
+  UsersOnProducts UsersOnProducts[]
+
+  @@map(name: "users")
+}
+
+model Product {
+  id              String            @id @default(cuid())
+  name            String
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  owner           User?             @relation(fields: [owner_id], references: [id])
+  owner_id        String?
+  testimonials    Testimonial[]
+  UsersOnProducts UsersOnProducts[]
+
+  @@map(name: "products")
+}
+
+model UsersOnProducts {
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     String // relation scalar field (used in the `@relation` attribute above)
+  product     Product  @relation(fields: [product_id], references: [id])
+  product_id  String // relation scalar field (used in the `@relation` attribute above)
+  assigned_at DateTime @default(now())
+  assigned_by String
+
+  @@id([user_id, product_id])
+  @@map(name: "users_on_products")
+}
+
+//TODO: file attachments and platforms
+model Testimonial {
+  id         String   @id @default(cuid())
+  product    Product? @relation(fields: [product_id], references: [id])
+  product_id String?
+  name       String?
+  avatar     String?
+  header     String?
+  body       String?
+  date       DateTime @default(now())
+
+  @@map(name: "testimonials")
+}
