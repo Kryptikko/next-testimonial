@@ -11,52 +11,52 @@ datasource db {
 }
 
 model User {
-  id              String            @id @default(cuid())
-  name            String?
-  email           String?           @unique
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  products        Product[]
-  UsersOnProducts UsersOnProducts[]
+  id         String    @id @default(cuid())
+  name       String?
+  email      String?   @unique
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  projects   Project[]
 
   @@map(name: "users")
 }
 
-model Product {
-  id              String            @id @default(cuid())
-  name            String
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  owner           User?             @relation(fields: [owner_id], references: [id])
-  owner_id        String?
-  testimonials    Testimonial[]
-  UsersOnProducts UsersOnProducts[]
+//TODO
+// - members
+// - api key for the widgets
+model Project {
+  id           String        @id @default(cuid())
+  name         String
+  url          String
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  owner        User?         @relation(fields: [owner_id], references: [id])
+  owner_id     String?
+  testimonials Testimonial[]
 
-  @@map(name: "products")
+  @@map(name: "projects")
 }
 
-model UsersOnProducts {
-  user        User     @relation(fields: [user_id], references: [id])
-  user_id     String // relation scalar field (used in the `@relation` attribute above)
-  product     Product  @relation(fields: [product_id], references: [id])
-  product_id  String // relation scalar field (used in the `@relation` attribute above)
-  assigned_at DateTime @default(now())
-  assigned_by String
-
-  @@id([user_id, product_id])
-  @@map(name: "users_on_products")
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
-//TODO: file attachments and platforms
+//TODO:
+// - file attachments
 model Testimonial {
   id         String   @id @default(cuid())
-  product    Product? @relation(fields: [product_id], references: [id])
-  product_id String?
-  name       String?
+  project    Project? @relation(fields: [project_id], references: [id])
+  project_id String?
   avatar     String?
-  header     String?
+  name       String?
+  tagline    String?
   body       String?
-  date       DateTime @default(now())
+  url        String?
+  status     Status   @default(PENDING)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@map(name: "testimonials")
 }

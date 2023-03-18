@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client'
-console.log(process.env)
+import { PrismaClient, Prisma } from '@prisma/client'
 
 const prisma = new PrismaClient()
 async function main() {
@@ -17,9 +16,22 @@ async function main() {
     create: {
       email: 'velin.br.vangelov@gmail.com' ,
       name: 'Velin Vangelov',
+      projects: {
+        create: [{
+          "name": "beep",
+          "url": "youtube.com",
+          "testimonials": {
+            create: [{
+              "name": "John Doe",
+              "tagline": "Big Boss Man",
+              "body": "I'm a very happy body"
+            }]
+          }
+        }]
+      }
     },
   })
-  console.log({ velin, buford })
+  console.log(velin, buford);
 }
 
 main()

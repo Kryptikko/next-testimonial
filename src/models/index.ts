@@ -1,27 +1,17 @@
-import { Sequelize } from 'sequelize';
+// defined in the global scope. This is because the global object is only
+// defined in the global scope in Node.js and not in the browser.
+import { PrismaClient } from '@prisma/client'
 
-const {
-  DB_NAME,
-  DB_USER,
-  DB_PASS,
-  DB_HOST
-} = process.env;
+// PrismaClient is attached to the `global` object in development to prevent
+// exhausting your database connection limit.
+//
+// Learn more:
+// https://pris.ly/d/help/next-js-best-practices
 
-// @ts-ignore
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
-    host: DB_HOST,
-    dialect: 'postgres'
-});
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
-const getConnection = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
-  } catch (error) {
-      console.error('Unable to connect to the database:', error);
-  }
-  return sequelize
-}
+export const prisma = globalForPrisma.prisma || new PrismaClient()
 
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-export default getConnection();
+export default prisma
