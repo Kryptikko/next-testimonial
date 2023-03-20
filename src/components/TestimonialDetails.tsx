@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { useState } from "react";
+import useSwr from "swr";
 import DoneOutlinedIcon from '@mui/icons-material/DoneOutlined';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -10,6 +11,7 @@ import { Status } from '@/types/Testimonial';
 import TestimonialForm from './TestimonialForm';
 
 // TODO: export the methods into an api or "service" file?
+const _getTestimonial = (resourceUrl: string) => fetch(resourceUrl).then(res => res.json())
 const _updateTestimonial = (data: Testimonial) => fetch(`/api/testimonial/${data.id}`, {
   method: "PUT",
   body: JSON.stringify(data)
@@ -21,11 +23,18 @@ const _deleteTestimonial = (id: string) => fetch(`/api/testimonial/${id}`, {
 
 const TestimonialDetails: FC<{
   onClose: () => void,
-  testimonial?: Testimonial
-}> = ({onClose, testimonial}) => {
+  id: string
+}> = ({onClose, id}) => {
+  const { data: testimonial, error, mutate, isLoading } = useSwr<Testimonial>(`/api/testimonial/${id}`, _getTestimonial);
   const [edit, setEdit] = useState<boolean>(false);
+
+  // TODO: handle loading and errors better
+  if (isLoading)
+    return <>Loading...</>
+
   if (!testimonial)
     return <></>
+
   return (
     <Drawer
       anchor={'right'}
@@ -44,7 +53,8 @@ const TestimonialDetails: FC<{
                 } />
               <CardContent>
                 <TestimonialForm data={testimonial} onSubmit={async data => {
-                  await _updateTestimonial(data)
+                  const res = await _updateTestimonial(data)
+                  mutate(res);
                   setEdit(false);
                 }} />
               </CardContent>
@@ -63,14 +73,16 @@ const TestimonialDetails: FC<{
                 <>
                   { ["PENDING", "REJECTED"].includes(testimonial.status) &&
                     <IconButton color="success" onClick={async () => {
-                      await _updateTestimonial({...testimonial, status: Status.APPROVED})
+                      const res = await _updateTestimonial({...testimonial, status: Status.APPROVED})
+                      mutate(res);
                     }}>
                       <DoneOutlinedIcon />
                     </IconButton>
                   }
                   { ["PENDING", "APPROVED"].includes(testimonial.status) &&
                     <IconButton color="error" onClick={async () => {
-                      await _updateTestimonial({...testimonial, status: Status.REJECTED})
+                      const res = await _updateTestimonial({...testimonial, status: Status.REJECTED})
+                      mutate(res);
                     }}>
                       <CloseOutlinedIcon />
                     </IconButton>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from 'next/router'
 import { GetServerSideProps } from 'next'
-import Layout from '@/components/AppLayout'
+import Layout from '@/components/layout/AppLayout'
 import TestimonialDetails from '@/components/TestimonialDetails'
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Card, CardContent, CardHeader, Chip } from '@mui/material';
@@ -38,7 +38,6 @@ const columns: GridColDef[] = [
         </Stack>
       )
     }
-
   },
   {
     field: 'body',
@@ -67,6 +66,7 @@ const columns: GridColDef[] = [
   }
 ];
 
+//TODO: setup globally in the layout files
 //@ts-ignore
 const Page = ({fallback, ...rest}) =>
   <SWRConfig value={{fallback}}>
@@ -80,7 +80,9 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const ProductDashboard: React.FC = () => {
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial>();
   const router = useRouter();
-  const { data: testimonials } = useSWR<Testimonial[]>(`/api/project/${router.query.id}/testimonials`, fetcher)
+  //TODO: handle loading
+  const { data: testimonials, mutate } = useSWR<Testimonial[]>(`/api/project/${router.query.id}/testimonials`, fetcher)
+
   return (
       <Layout>
         <Card sx={{height: "100%", display: 'flex', flexDirection: 'column', padding: 3, borderRadius: 0, border: 0}}>
@@ -98,7 +100,15 @@ const ProductDashboard: React.FC = () => {
               />
           </CardContent>
         </Card>
-        <TestimonialDetails testimonial={selectedTestimonial} onClose={() => setSelectedTestimonial(undefined)}/>
+        { selectedTestimonial &&
+          <TestimonialDetails
+            id={selectedTestimonial.id}
+            onClose={() => {
+              mutate()
+              setSelectedTestimonial(undefined)
+            }}
+          />
+        }
       </Layout>
   );
 }
@@ -111,6 +121,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     include: {testimonials: true}
   });
   const testimonial = project?.testimonials || [];
+  // preload the cahce during SSR
   return { props: {
     fallback: {
       [`/api/project/${id}/testimonials`]: JSON.parse(JSON.stringify(testimonial))

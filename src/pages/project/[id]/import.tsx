@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { GetServerSideProps } from 'next'
-import Layout from '@/components/AppLayout'
+import Layout from '@/components/layout/AppLayout'
 import TestimonialForm from '@/components/TestimonialForm'
-import { Card, CardContent, CardHeader } from '@mui/material';
+import { Card, CardContent, CardHeader, Snackbar } from '@mui/material';
 import db from '@/models'
 import type { Project } from '@/types/Project'
 import type { Testimonial } from '@/types/Testimonial'
@@ -14,6 +15,8 @@ const _importTestimonial = (data: Testimonial) => fetch("/api/testimonial", {
 }).then(res => res.json())
 
 const TestimonialImport: React.FC<{project: ExpandedProject}> = ({project}) => {
+  const [showSnackbar, setShowSnackbar] = useState<boolean>(false);
+
   return (
     <Layout>
       <Card sx={{
@@ -28,10 +31,19 @@ const TestimonialImport: React.FC<{project: ExpandedProject}> = ({project}) => {
         <CardContent sx={{maxWidth: "32rem"}}>
           <TestimonialForm onSubmit={(data) => {
             data.project_id = project.id
-            return _importTestimonial(data)
+            const promise =  _importTestimonial(data)
+            // TODO: handle error
+            setShowSnackbar(true)
+            return promise;
           }} />
         </CardContent>
       </Card>
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setShowSnackbar(false)}
+        message="New testimonial saved"
+      />
     </Layout>
   );
 }
